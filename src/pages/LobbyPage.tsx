@@ -1,16 +1,66 @@
 import { motion } from 'framer-motion'
 import GlowCard from '../components/GlowCard'
-import type { GameCode, Team } from '../types'
+import type { Team } from '../types'
 import { TEAM_COLORS, clamp, uid } from '../utils/colors'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
+type GameOption = { code: string; label: string }
 
 export default function LobbyPage(props: {
-  onStart: (game: GameCode, teams: Team[]) => void
+  onStart: (game: string, teams: Team[]) => void
 }) {
-  const [game, setGame] = useState<GameCode>('2a')
-  const [teamCount, setTeamCount] = useState<number>(4)
+  const [game, setGame] = useState<string>('')
 
+  const [teamCount, setTeamCount] = useState<number>(4)
   const [names, setNames] = useState<Record<number, string>>({})
+
+  const [gameOptions, setGameOptions] = useState<GameOption[]>([])
+  const [gamesLoading, setGamesLoading] = useState(true)
+  const [gamesError, setGamesError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadGames() {
+      setGamesLoading(true)
+      setGamesError(null)
+
+      const { data, error } = await supabase
+        .from('questions')
+        .select('game_code')
+
+      if (cancelled) return
+
+      if (error) {
+        setGamesError(error.message)
+        setGameOptions([])
+        setGame('')
+        setGamesLoading(false)
+        return
+      }
+
+      const unique = Array.from(
+        new Set((data ?? []).map((r: any) => String(r.game_code ?? '').trim()).filter(Boolean)),
+      ).sort((a, b) => a.localeCompare(b))
+
+      const opts: GameOption[] = unique.map((code) => ({
+        code,
+        // label: make it look nice in UI (you can change this)
+        label: code.toUpperCase().replace(/_/g, ' '),
+      }))
+
+      setGameOptions(opts)
+      setGame((prev) => (prev && unique.includes(prev) ? prev : (opts[0]?.code ?? '')))
+      setGamesLoading(false)
+    }
+
+    loadGames()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const teams: Team[] = useMemo(() => {
     return Array.from({ length: teamCount }).map((_, i) => ({
@@ -19,23 +69,14 @@ export default function LobbyPage(props: {
       color: TEAM_COLORS[i % TEAM_COLORS.length],
       score: 0,
     }))
-   
-  }, [teamCount, JSON.stringify(names)])
 
-  const GAME_OPTIONS: { code: GameCode; label: string }[] = [
-    { code: '2a', label: '2A' },
-    { code: '2b', label: '2B' }
-  ]
+  }, [teamCount, JSON.stringify(names)])
 
   function BouncyText({ text }: { text: string }) {
     return (
       <span className="letterBounce">
         {text.split('').map((char, i) => (
-          <span
-            key={i}
-            className="bounceChar"
-            style={{ animationDelay: `${i * 0.07}s` }}
-          >
+          <span key={i} className="bounceChar" style={{ animationDelay: `${i * 0.07}s` }}>
             {char === ' ' ? '\u00A0' : char}
           </span>
         ))}
@@ -43,6 +84,7 @@ export default function LobbyPage(props: {
     )
   }
 
+  const canStart = !gamesLoading && !gamesError && !!game && gameOptions.length > 0
 
   return (
     <div className="page">
@@ -53,7 +95,9 @@ export default function LobbyPage(props: {
           transition={{ type: 'spring', stiffness: 420, damping: 28 }}
         >
           <div className="brand">AOSX School Game</div>
-          <h1 className="title"><BouncyText text="Select Your Game"/></h1>
+          <h1 className="title">
+            <BouncyText text="Select Your Game" />
+          </h1>
           <div className="subtitle">Database can will be implemented soon.</div>
         </motion.div>
       </div>
@@ -61,36 +105,47 @@ export default function LobbyPage(props: {
       <div className="grid2">
         <GlowCard>
           <div className="cardTitle">Game Type</div>
+
           <div className="segmented">
-            {GAME_OPTIONS.map((g) => (
-              <button
-                key={g.code}
-                className={`segBtn ${game === g.code ? 'segActive' : ''}`}
-                onClick={() => setGame(g.code)}
-              >
-                {g.label}
+            {gamesLoading ? (
+              <button className="segBtn" disabled>
+                Loading…
               </button>
-            ))}
+            ) : gameOptions.length === 0 ? (
+              <button className="segBtn" disabled>
+                No games found
+              </button>
+            ) : (
+              gameOptions.map((g) => (
+                <button
+                  key={g.code}
+                  className={`segBtn ${game === g.code ? 'segActive' : ''}`}
+                  onClick={() => setGame(g.code)}
+                >
+                  {g.label}
+                </button>
+              ))
+            )}
           </div>
+
+          {gamesError && (
+            <div className="hint" style={{ marginTop: 10 }}>
+              Failed to load games: {gamesError}
+            </div>
+          )}
 
           <div className="spacer" />
 
           <div className="cardTitle">Number of Teams</div>
           <div className="row">
             <div className="teamCounter">
-              <button
-                className="teamBtn"
-                onClick={() => setTeamCount(c => clamp(c - 1, 2, 8))}
-              >
+              <button className="teamBtn" onClick={() => setTeamCount((c) => clamp(c - 1, 2, 8))}>
                 –
               </button>
 
               <div className="teamCount">{teamCount}</div>
 
-              <button
-                className="teamBtn"
-                onClick={() => setTeamCount(c => clamp(c + 1, 2, 8))}
-              >
+              <button className="teamBtn" onClick={() => setTeamCount((c) => clamp(c + 1, 2, 8))}>
                 +
               </button>
             </div>
@@ -100,7 +155,11 @@ export default function LobbyPage(props: {
 
           <div className="spacer" />
 
-          <button className="btn primary big" onClick={() => props.onStart(game, teams)}>
+          <button
+            className="btn primary big"
+            disabled={!canStart}
+            onClick={() => props.onStart(game, teams)}
+          >
             Start Game
           </button>
         </GlowCard>

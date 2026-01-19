@@ -45,13 +45,11 @@ export default function TileCard(props: {
     >
       <motion.div
         key={`${props.tile.claimedByTeamId ?? 'none'}`}
+        className='tileArrangement'
       >
-        <div className="tileTop">
-          <div className="tilePoints">{props.tile.question.points}</div>
-          <div className="tilePtsLabel">PTS</div>
-        </div>
+        <div className="tilePoints">{props.tile.question.points}</div>
+        <div className="tilePtsLabel">PTS</div>
 
-        <div className="tileQ">{props.tile.question.question}</div>
 
         {claimedTeam && (
           <>
@@ -73,11 +71,13 @@ export default function TileCard(props: {
             </motion.div>
           </>
         )}
+
+        <div className="tileHint" aria-hidden={isClaimed ? true : undefined}>
+          Drag a team here
+        </div>
       </motion.div>
 
-      <div className="tileHint" aria-hidden={isClaimed ? true : undefined}>
-        Drag a team here
-      </div>
+      
     </motion.div>
   )
 }

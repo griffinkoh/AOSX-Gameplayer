@@ -17,7 +17,7 @@ export default function QuestionModal(props: {
   onCorrect: () => void
   onWrong: () => void
 }) {
-  const total = props.tile?.question.timeLimitSec ?? 0
+  const total = 30
   const [sec, setSec] = useState<number>(total)
 
   // show answer only after Correct is clicked
@@ -27,9 +27,9 @@ export default function QuestionModal(props: {
   const [teamMenuOpen, setTeamMenuOpen] = useState(false)
   const teamPickerRef = useRef<HTMLDivElement | null>(null)
 
-  // ✅ NEW: track which tile is currently shown, so we don't reset state on tile object updates
   const prevTileIdRef = useRef<string | null>(null)
 
+  // Reset when a NEW tile opens
   useEffect(() => {
     if (!props.open || !props.tile) return
 
@@ -38,19 +38,28 @@ export default function QuestionModal(props: {
 
     if (isNewTile) {
       prevTileIdRef.current = tileId
-      setSec(props.tile.question.timeLimitSec)
+      setSec(30)
       setTeamMenuOpen(false)
       setRevealed(false)
     }
   }, [props.open, props.tile?.id])
 
+  // Countdown timer (stops after reveal)
   useEffect(() => {
-    if (!props.open || revealed) return // stop timer after Correct
+    if (!props.open || revealed) return
     const t = setInterval(() => setSec((s) => Math.max(0, s - 1)), 1000)
     return () => clearInterval(t)
   }, [props.open, revealed])
 
-  // Close only the dropdown (NOT the modal) when clicking outside
+  // ✅ Reset when modal closes
+  useEffect(() => {
+    if (props.open) return
+    setSec(30)
+    setRevealed(false)
+    setTeamMenuOpen(false)
+  }, [props.open, props.tile?.id])
+
+  // Close dropdown only
   useEffect(() => {
     if (!teamMenuOpen) return
     const onDown = (e: MouseEvent) => {
@@ -61,7 +70,7 @@ export default function QuestionModal(props: {
     return () => document.removeEventListener('mousedown', onDown)
   }, [teamMenuOpen])
 
-  // Esc closes dropdown only (NOT modal)
+  // Esc closes dropdown only
   useEffect(() => {
     if (!props.open) return
     const onKey = (e: KeyboardEvent) => {
@@ -116,7 +125,6 @@ export default function QuestionModal(props: {
           >
             {header}
 
-            {/* Team selection ONLY before Correct */}
             {!revealed && (
               <div className="modalTeamRow">
                 <div className="modalTeamLabel">Answering team</div>
@@ -182,10 +190,8 @@ export default function QuestionModal(props: {
               </div>
             )}
 
-            {/* Question stays in original spot BEFORE Correct */}
             {!revealed && <div className="modalQuestion">{props.tile.question.question}</div>}
 
-            {/* After Correct: show question + answer */}
             <AnimatePresence>
               {revealed && (
                 <motion.div
@@ -196,35 +202,29 @@ export default function QuestionModal(props: {
                   transition={{ duration: 0.18 }}
                 >
                   <div className="modalAnswerLabel">Question</div>
-                  <div className="modalAnswerText" style={{marginBottom: 35}}>{props.tile.question.question}</div>
+                  <div className="modalAnswerText" style={{ marginBottom: 35 }}>
+                    {props.tile.question.question}
+                  </div>
 
                   <div className="modalAnswerLabel" style={{ marginTop: 10 }}>
                     Answer
                   </div>
-                  <div className="modalAnswerText" style={{fontWeight: 100, fontSize: 18}}>{answerText}</div>
+                  <div className="modalAnswerText" style={{ fontWeight: 500, fontSize: 18 }}>
+                    {answerText}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             <div className="questionFooter">
-              <div
-                className="modalHint"
-                style={{ visibility: revealed ? 'hidden' : 'visible' }}
-              >
+              <div className="modalHint" style={{ visibility: revealed ? 'hidden' : 'visible' }}>
                 After a tile is marked correct, it is <b>locked</b> and cannot be replaced.
               </div>
 
               <div className="modalActions">
                 {!revealed ? (
                   <>
-                    <button
-                      className="btn danger"
-                      onClick={() => {
-                        sfx.tap()
-                        props.onWrong()
-                      }}
-                      disabled={!canAnswer}
-                    >
+                    <button className="btn danger" onClick={() => { sfx.tap(); props.onWrong() }} disabled={!canAnswer}>
                       Wrong
                     </button>
 
@@ -242,13 +242,7 @@ export default function QuestionModal(props: {
                     </button>
                   </>
                 ) : (
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      sfx.tap()
-                      props.onClose()
-                    }}
-                  >
+                  <button className="btn" onClick={() => { sfx.tap(); props.onClose() }}>
                     Close
                   </button>
                 )}

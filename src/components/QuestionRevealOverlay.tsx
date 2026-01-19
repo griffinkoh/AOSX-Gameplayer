@@ -31,7 +31,7 @@ export default function QuestionRevealOverlay(props: {
             transition={{ type: 'spring', stiffness: 360, damping: 26 }}
             onAnimationComplete={() => {
               // hold briefly then continue
-              setTimeout(() => props.onDone(), 420)
+              setTimeout(() => props.onDone(), 2000)
             }}
           >
             <div className="revealPts">{props.tile.question.points} pts</div>

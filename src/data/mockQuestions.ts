@@ -1,6 +1,6 @@
-import type { GameCode, Question } from '../types'
+import type { Question } from '../types'
 
-const mk = (i: number, game: GameCode, question: string,  answer: string, points: number, timeLimitSec:number, ): Question => ({
+const mk = (i: number, game: string, question: string,  answer: string, points: number, timeLimitSec:number, ): Question => ({
   id: `${game}-q${i}`,
   game,
   question,

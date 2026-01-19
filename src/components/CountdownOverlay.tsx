@@ -33,7 +33,7 @@ export default function CountdownOverlay(props: {
     if (!props.open) return
     if (n === 0) {
       sfx.start()
-      const t = setTimeout(() => props.onDone(), 250)
+      const t = setTimeout(() => props.onDone(), 300)
       return () => clearTimeout(t)
     }
   }, [props.open, n, props])

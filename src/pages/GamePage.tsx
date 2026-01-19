@@ -5,17 +5,20 @@ import TeamChipsBar from '../components/TeamChipsBar'
 import CustomDragLayer from '../components/CustomDragLayer'
 import CountdownOverlay from '../components/CountdownOverlay'
 import QuestionRevealOverlay from '../components/QuestionRevealOverlay'
-import type { GameCode, Team, Tile } from '../types'
-import { QUESTIONS } from '../data/mockQuestions'
+import type { Team, Tile } from '../types'
 import { BONUS_POINTS, lineKeysCompleted } from '../utils/scoring'
 import { burstConfetti } from '../components/Confetti'
 import { sfx } from '../utils/sfx'
+import { loadQuestions } from '../data/questions.api'
+import { useEffect } from 'react'
 
-function buildBoardDeterministic(game: GameCode): Tile[] {
-  const pool = QUESTIONS.filter((q) => q.game === game)
-  const pick = pool.slice(0, 16)
-  return pick.map((q, idx) => ({ id: `tile-${idx}`, question: q }))
+async function buildBoardFromDB(game: string): Promise<Tile[]> {
+  const qs = await loadQuestions(game)
+  console.log(qs)
+  if (qs.length !== 16) throw new Error("This game does not have exactly 16 questions")
+  return qs.map((q, idx) => ({ id: `tile-${idx}`, question: q }))
 }
+
 
 function recomputeTeams(teams: Team[], tiles: Tile[]): Team[] {
   const baseByTeam = new Map<string, number>()
@@ -39,12 +42,21 @@ function recomputeTeams(teams: Team[], tiles: Tile[]): Team[] {
 }
 
 export default function GamePage(props: {
-  game: GameCode
+  game: string
   teams: Team[]
   onEnd: (finalTeams: Team[]) => void
 }) {
   const [teams, setTeams] = useState<Team[]>(props.teams)
-  const [tiles, setTiles] = useState<Tile[]>(() => buildBoardDeterministic(props.game))
+  const [tiles, setTiles] = useState<Tile[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    buildBoardFromDB(props.game)
+      .then(setTiles)
+      .finally(() => setLoading(false))
+  }, [props.game])
+
 
   const [selectedTeamId, setSelectedTeamId] = useState<string>(props.teams[0]?.id ?? '')
   const selectedTeam = useMemo(() => teams.find((t) => t.id === selectedTeamId) ?? null, [teams, selectedTeamId])
@@ -132,6 +144,14 @@ export default function GamePage(props: {
   }
 
   const usedTiles = tiles.filter((t) => !!t.claimedByTeamId).length
+
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="loader">Loading questions…</div>
+      </div>
+    )
+  }
 
   return (
     <div className="page">

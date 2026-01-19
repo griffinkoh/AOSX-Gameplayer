@@ -1,5 +1,3 @@
-export type GameCode = '2a' | '2b' | '3a'
-
 export type Team = {
   id: string
   name: string
@@ -9,10 +7,10 @@ export type Team = {
 
 export type Question = {
   id: string
-  game: GameCode
-  points: number
+  game: string
   question: string
   answer: string
+  points: number
   timeLimitSec: number
 }
 
