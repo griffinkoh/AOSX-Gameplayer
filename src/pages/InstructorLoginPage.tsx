@@ -1,43 +1,63 @@
-import { useState } from 'react'
-import GlowCard from '../components/GlowCard'
-import { supabase } from '../lib/supabase'
+import { useMemo, useState } from "react";
+import GlowCard from "../components/GlowCard";
+import { supabase } from "../lib/supabase";
 
-const USERNAME_DOMAIN = import.meta.env.VITE_ADMIN_DOMAIN
+function cleanDomain(raw: unknown) {
+  return String(raw ?? "")
+    .trim()
+    .replace(/^['"]+|['"]+$/g, "") // remove wrapping ' or "
+    .toLowerCase();
+}
 
 export default function InstructorLoginPage(props: {
-  navigate: (to: string) => void
-  onLogin: () => void
+  navigate: (to: string) => void;
+  onLogin: () => void;
 }) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const USERNAME_DOMAIN = useMemo(
+    () => cleanDomain(import.meta.env.VITE_ADMIN_DOMAIN),
+    []
+  );
 
   async function handleLogin() {
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter username and password!')
-      return
+    const u = username.trim().toLowerCase();
+    const p = password.trim();
+
+    if (!u || !p) {
+      setError("Please enter username and password!");
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    if (!USERNAME_DOMAIN) {
+      setError("Missing VITE_ADMIN_DOMAIN in environment.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     // Convert username -> internal email
-    const email = `${username.toLowerCase()}@${USERNAME_DOMAIN}`
+    const email = `${u}@${USERNAME_DOMAIN}`;
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password,
-    })
+      password: p,
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (error) {
-      setError('Invalid username or password!')
-      return
+      // Show real error in console to debug (optional)
+      console.error("Login error:", error);
+      setError("Invalid username or password!");
+      return;
     }
 
-    props.onLogin()
+    props.onLogin();
   }
 
   return (
@@ -45,9 +65,7 @@ export default function InstructorLoginPage(props: {
       <div className="landingCenter">
         <GlowCard>
           <div className="landingTitle">Instructor Login</div>
-          <div className="landingSub">
-            Login for Instructor Dashboard
-          </div>
+          <div className="landingSub">Login for Instructor Dashboard</div>
 
           <div className="formGrid">
             <label className="formLabel">
@@ -74,15 +92,26 @@ export default function InstructorLoginPage(props: {
             </label>
           </div>
 
-          {error && <div className="hint" style={{ marginTop: 10, color: "red", fontWeight: "500" }}>{error}</div>}
+          {error && (
+            <div
+              className="hint"
+              style={{ marginTop: 10, color: "red", fontWeight: "500" }}
+            >
+              {error}
+            </div>
+          )}
 
           <div className="landingActions" style={{ marginTop: 16 }}>
-            <button className="btn loginButton" onClick={handleLogin} disabled={loading}>
-              {loading ? 'Logging in…' : 'Login'}
+            <button
+              className="btn loginButton"
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              {loading ? "Logging in…" : "Login"}
             </button>
           </div>
         </GlowCard>
       </div>
     </div>
-  )
+  );
 }
