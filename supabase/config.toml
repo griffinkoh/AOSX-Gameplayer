@@ -383,16 +383,16 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-[functions.sync-questions]
+[functions.sync_bingo_questions]
 enabled = true
 verify_jwt = false
-import_map = "./functions/sync-questions/deno.json"
+import_map = "./functions/sync_bingo_questions/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/sync-questions/index.ts"
+entrypoint = "./functions/sync_bingo_questions/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/sync-questions/*.html" ]
+# static_files = [ "./functions/sync_bingo_questions/*.html" ]
 
 [functions.cleanup-games]
 enabled = true
@@ -404,3 +404,14 @@ entrypoint = "./functions/cleanup-games/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/cleanup-games/*.html" ]
+
+[functions.sync_category_questions]
+enabled = true
+verify_jwt = false
+import_map = "./functions/sync_category_questions/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/sync_category_questions/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/sync_category_questions/*.html" ]

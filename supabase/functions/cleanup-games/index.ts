@@ -45,7 +45,7 @@ serve(async (req) => {
 
     // Delete all question rows whose game_code is NOT in current sheet list
     const { error } = await supabase
-      .from("questions")
+      .from("bingo_questions")
       .delete()
       .not("game_code", "in", `(${codes.map((c) => `"${c.replace(/"/g, '\\"')}"`).join(",")})`)
 

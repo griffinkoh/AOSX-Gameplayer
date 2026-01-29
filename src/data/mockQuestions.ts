@@ -1,6 +1,6 @@
-import type {  Question } from '../types'
+import type {  BingoQuestion } from '../types'
 
-const mk = (i: number, game: string, question: string,  answer: string, points: number, timeLimitSec:number, category: string): Question => ({
+const mk = (i: number, game: string, question: string,  answer: string, points: number, timeLimitSec:number, category: string): BingoQuestion => ({
   id: `${game}-q${i}`,
   game,
   question,
@@ -11,7 +11,7 @@ const mk = (i: number, game: string, question: string,  answer: string, points: 
 })
 
 
-export const QUESTIONS: Question[] = [
+export const QUESTIONS: BingoQuestion[] = [
   // 2a
   mk(1, '2a', "LIST THE AIRPORTS/AIRFIELDS IN KL SECT 2", "test", 150, 30, "nil"),
   mk(2, '2a', "NAME THE NATO ALPHABETIC CODE", "Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet, Kilo, Lima, Mike, November, Oscar, Papa, Quebec, Romeo, Sierra, Tango, Uniform, Victor, Whiskey, X-ray, Yankee, Zulu", 100, 30, "nil"),

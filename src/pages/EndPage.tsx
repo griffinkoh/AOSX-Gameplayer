@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { Team } from '../types'
-import { burstConfetti } from '../components/Confetti'
+import { burstConfetti } from '../utils/Confetti'
 import { sfx } from '../utils/sfx'
-import TeamAvatar from '../components/TeamMascot'
+import TeamAvatar from '../components/Team/TeamMascot'
 
 export default function EndPage(props: {
   teams: Team[]
